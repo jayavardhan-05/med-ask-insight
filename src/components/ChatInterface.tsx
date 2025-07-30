@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Send, Bot, User } from 'lucide-react';
+import { apiService } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -41,30 +42,17 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Simulated API response for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await apiService.chat({ question: userMessage.content });
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `This is a simulated response to: "${userMessage.content}". The AI would analyze medical documents and provide comprehensive answers based on the loaded knowledge base.`,
+        content: response.answer,
         timestamp: new Date(),
       };
 
-      const mockSources: Source[] = [
-        {
-          content: "Sample medical text from a research paper discussing the topic. This would contain the actual extracted content from the medical knowledge base that supports the AI's answer.",
-          metadata: { source: "Medical Journal 2023" }
-        },
-        {
-          content: "Another relevant excerpt from a different medical document that provides additional context and supporting information for the generated response.",
-          metadata: { source: "Clinical Guidelines" }
-        }
-      ];
-
       setMessages(prev => [...prev, aiMessage]);
-      onSourcesUpdate(mockSources);
+      onSourcesUpdate(response.sources);
     } catch (error) {
       console.error('Error fetching answer:', error);
       const errorMessage: Message = {
