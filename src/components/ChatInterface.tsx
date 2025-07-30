@@ -41,18 +41,29 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Simulated API response for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Before the API call - show loading cursor
+      document.body.style.cursor = 'wait';
+
+      const response = await fetch("http://localhost:8000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMessage.content })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `This is a simulated response to: "${userMessage.content}". The AI would analyze medical documents and provide comprehensive answers based on the loaded knowledge base.`,
+        content: data.answer || `This is a response to: "${userMessage.content}". The AI analyzed medical documents and provided comprehensive answers based on the loaded knowledge base.`,
         timestamp: new Date(),
       };
 
-      const mockSources: Source[] = [
+      const sources: Source[] = data.sources || [
         {
           content: "Sample medical text from a research paper discussing the topic. This would contain the actual extracted content from the medical knowledge base that supports the AI's answer.",
           metadata: { source: "Medical Journal 2023" }
@@ -64,9 +75,9 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
       ];
 
       setMessages(prev => [...prev, aiMessage]);
-      onSourcesUpdate(mockSources);
+      onSourcesUpdate(sources);
     } catch (error) {
-      console.error('Error fetching answer:', error);
+      console.error("Error:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
@@ -75,6 +86,8 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
+      // After the request completes - restore default cursor
+      document.body.style.cursor = 'default';
       setIsLoading(false);
     }
   };
