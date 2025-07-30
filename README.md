@@ -32,7 +32,10 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Configure the backend URL (copy .env.example to .env and update as needed)
+cp .env.example .env
+
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
@@ -59,6 +62,29 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+
+## Backend Configuration
+
+This application connects to the "Med Ask Insight" backend service. To configure the backend URL:
+
+1. Copy `.env.example` to `.env`:
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Update the `VITE_API_BASE_URL` in your `.env` file with your actual Med Ask Insight backend URL:
+   ```
+   VITE_API_BASE_URL=https://your-med-ask-insight-backend.com
+   ```
+
+3. For local development, you might use:
+   ```
+   VITE_API_BASE_URL=http://localhost:8000
+   ```
+
+The application expects the backend to provide the following API endpoints:
+- `POST /api/chat` - For sending questions and receiving AI responses
+- The response should include `answer` (string) and optionally `sources` (array of source objects)
 
 ## How can I deploy this project?
 

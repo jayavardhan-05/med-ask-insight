@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Send, Bot, User } from 'lucide-react';
+import { buildApiUrl, API_CONFIG } from '@/lib/config';
 
 interface Message {
   id: string;
@@ -41,30 +42,47 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Simulated API response for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Make API call to med ask insight backend
+      const apiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.CHAT);
+      console.log('Making API call to:', apiUrl);
+      
+      const requestBody = {
+        question: userMessage.content,
+        timestamp: userMessage.timestamp.toISOString(),
+      };
+      console.log('Request body:', requestBody);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response data:', data);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `This is a simulated response to: "${userMessage.content}". The AI would analyze medical documents and provide comprehensive answers based on the loaded knowledge base.`,
+        content: data.answer || 'No response received from the backend.',
         timestamp: new Date(),
       };
 
-      const mockSources: Source[] = [
-        {
-          content: "Sample medical text from a research paper discussing the topic. This would contain the actual extracted content from the medical knowledge base that supports the AI's answer.",
-          metadata: { source: "Medical Journal 2023" }
-        },
-        {
-          content: "Another relevant excerpt from a different medical document that provides additional context and supporting information for the generated response.",
-          metadata: { source: "Clinical Guidelines" }
-        }
-      ];
+      // Update sources if provided by the backend
+      const sources: Source[] = data.sources || [];
 
       setMessages(prev => [...prev, aiMessage]);
-      onSourcesUpdate(mockSources);
+      onSourcesUpdate(sources);
     } catch (error) {
       console.error('Error fetching answer:', error);
       const errorMessage: Message = {
