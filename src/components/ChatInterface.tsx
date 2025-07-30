@@ -43,22 +43,33 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
 
     try {
       // Make API call to med ask insight backend
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.CHAT), {
+      const apiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.CHAT);
+      console.log('Making API call to:', apiUrl);
+      
+      const requestBody = {
+        question: userMessage.content,
+        timestamp: userMessage.timestamp.toISOString(),
+      };
+      console.log('Request body:', requestBody);
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          question: userMessage.content,
-          timestamp: userMessage.timestamp.toISOString(),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API Response data:', data);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
