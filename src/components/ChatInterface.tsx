@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Send, Bot, User } from 'lucide-react';
-import { buildApiUrl, API_CONFIG } from '@/lib/config';
 
 interface Message {
   id: string;
@@ -42,34 +41,22 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      // Make API call to med ask insight backend
-      const apiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.CHAT);
-      console.log('Making API call to:', apiUrl);
-      
-      const requestBody = {
-        question: userMessage.content,
-        timestamp: userMessage.timestamp.toISOString(),
-      };
-      console.log('Request body:', requestBody);
+      // Before the API call - show loading cursor
+      document.body.style.cursor = 'wait';
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      const response = await fetch("http://localhost:8000/your-api-endpoint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMessage.content })
       });
 
-      console.log('Response status:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('API Response data:', data);
+      // Handle the response from backend
+      console.log(data);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -84,7 +71,7 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
       setMessages(prev => [...prev, aiMessage]);
       onSourcesUpdate(sources);
     } catch (error) {
-      console.error('Error fetching answer:', error);
+      console.error("Error:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
@@ -93,6 +80,8 @@ export function ChatInterface({ onSourcesUpdate }: ChatInterfaceProps) {
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
+      // After the request completes - restore default cursor
+      document.body.style.cursor = 'default';
       setIsLoading(false);
     }
   };
